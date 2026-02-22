@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C-Sprint | Junior Novart Riwa</title>
+    <style>
+        :root { --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #58a6ff; --success: #238636; --error: #f85149; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+        
+        /* PAGE VISIBILITY */
+        .page { display: none; padding: 40px 20px; min-height: 100vh; box-sizing: border-box; }
+        .active { display: block; }
+
+        /* WELCOME PAGE STYLING */
+        #welcome-page { text-align: center; max-width: 800px; margin: auto; }
+        .rule-card { background: var(--card); border: 1px solid #30363d; padding: 20px; border-radius: 10px; text-align: left; margin: 20px 0; }
+        .creator-tag { margin-top: 50px; font-style: italic; color: #8b949e; }
+
+        /* AUTH & ARENA STYLING (Previous Styles Kept) */
+        .auth-card { background: var(--card); padding: 40px; border-radius: 12px; border: 1px solid #30363d; width: 350px; margin: auto; text-align: center; }
+        .grid { max-width: 1200px; margin: auto; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
+        .card { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid #30363d; }
+        textarea { width: 100%; height: 300px; background: #010409; color: #79c0ff; border: 1px solid #30363d; padding: 15px; border-radius: 5px; font-family: 'Consolas', monospace; }
+        
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #010409; border: 1px solid #30363d; color: white; border-radius: 6px; }
+        button { background: var(--accent); color: white; border: none; padding: 15px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.3s; }
+        button:hover { opacity: 0.8; transform: translateY(-2px); }
+        .btn-success { background: var(--success); }
+
+        .timer-strip { display: flex; justify-content: space-between; margin-bottom: 20px; padding: 10px; background: #010409; border-radius: 5px; border-left: 4px solid var(--accent); }
+    </style>
+</head>
+<body>
+
+    <div id="welcome-page" class="page active">
+        <h1 style="font-size: 3rem; color: var(--accent); margin-bottom: 10px;">C-Sprint Arena</h1>
+        <p style="font-size: 1.2rem;">Speed. Logic. Precision.</p>
+        <hr style="border: 0; border-top: 1px solid #30363d; margin: 30px 0;">
+        
+        <div class="rule-card">
+            <h3>What we do:</h3>
+            <p>We provide a high-pressure environment for C programmers to sharpen their skills. Every 5 minutes, the world gets a new problem. You have 3 minutes to solve it.</p>
+            
+            <h3>Rules & Regulations:</h3>
+            <ul>
+                <li><strong>The 3-Minute Rule:</strong> You must submit your code within 3 minutes of the question appearing. After that, the system locks.</li>
+                <li><strong>The Correctness Check:</strong> Points are only awarded if your code contains the required logic/keywords for the task.</li>
+                <li><strong>Anti-Cheat:</strong> If you switch browser tabs or minimize the window, your current code buffer will be wiped.</li>
+                <li><strong>Integrity:</strong> Write your own code. No AI-pasting.</li>
+            </ul>
+        </div>
+
+        <button onclick="showPage('auth-page')">Get Started</button>
+
+        <div class="creator-tag">
+            Created by: <strong>Junior Novart Riwa</strong>
+        </div>
+    </div>
+
+    <div id="auth-page" class="page">
+        <div class="auth-card">
+            <h2>Join the Arena</h2>
+            <p>Set your handle for the leaderboard</p>
+            <input type="text" id="reg-username" placeholder="Username">
+            <button class="btn-success" onclick="enterArena()">Enter Arena</button>
+        </div>
+    </div>
+
+    <div id="arena-page" class="page">
+        <div class="grid">
+            <div class="workspace">
+                <div class="card">
+                    <div class="timer-strip">
+                        <span id="next-q-timer" style="color: #d29922;">Next Quest: 05:00</span>
+                        <span id="submit-timer" style="color: var(--error);">Lockdown: 03:00</span>
+                    </div>
+                    <h2 id="q-title">Wait...</h2>
+                    <p id="q-desc">Preparing next challenge.</p>
+                    <textarea id="code-input" placeholder="// Your C code here..."></textarea>
+                    <button class="btn-success" id="submit-btn" onclick="processSubmission()">Submit Answer</button>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="card">
+                    <h3>🏆 Leaders</h3>
+                    <table style="width: 100%; text-align: left;">
+                        <tbody id="leaderboard-content"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let currentUser = "";
+    let currentIdx = 0;
+    let mainClock = 300; 
+    let submitClock = 180;
+    let isLocked = false;
+
+    const challenges = [
+        { title: "Integer Math", desc: "Divide 'a' by 'b'. Requirement: Use '/' operator.", keys: ["/"] },
+        { title: "Conditionals", desc: "Check if 'x' is greater than 10. Requirement: Use 'if'.", keys: ["if"] },
+        { title: "Print Function", desc: "Output the text 'Ready'. Requirement: Use 'printf'.", keys: ["printf"] }
+    ];
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+    }
+
+    function enterArena() {
+        const user = document.getElementById('reg-username').value;
+        if (user.length < 2) return alert("Enter a name!");
+        currentUser = user;
+        showPage('arena-page');
+        startSystem();
+    }
+
+    function startSystem() {
+        setInterval(() => {
+            mainClock--;
+            if (submitClock > 0) submitClock--;
+
+            if (mainClock <= 0) {
+                mainClock = 300; submitClock = 180;
+                currentIdx = (currentIdx + 1) % challenges.length;
+                document.getElementById('submit-btn').disabled = false;
+                document.getElementById('code-input').value = "";
+                isLocked = false;
+            }
+
+            if (submitClock <= 0 && !isLocked) {
+                isLocked = true;
+                document.getElementById('submit-btn').disabled = true;
+            }
+
+            document.getElementById('q-title').innerText = challenges[currentIdx].title;
+            document.getElementById('q-desc').innerText = challenges[currentIdx].desc;
+            document.getElementById('next-q-timer').innerText = `Next Quest: ${fmt(mainClock)}`;
+            document.getElementById('submit-timer').innerText = submitClock > 0 ? `Lockdown: ${fmt(submitClock)}` : "LOCKED";
+        }, 1000);
+    }
+
+    function fmt(s) { return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`; }
+
+    function processSubmission() {
+        const code = document.getElementById('code-input').value;
+        const passed = challenges[currentIdx].keys.every(k => code.includes(k));
+        const board = document.getElementById('leaderboard-content');
+        board.innerHTML = `<tr><td>${currentUser}</td><td style="color:${passed?'#238636':'#f85149'}">${passed?100:0} pts</td></tr>` + board.innerHTML;
+        alert(passed ? "Passed!" : "Failed - missing C requirements.");
+        document.getElementById('submit-btn').disabled = true;
+    }
+
+    // Anti-Cheat
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) document.getElementById('code-input').value = "";
+    });
+</script>
+</body>
+</html>
